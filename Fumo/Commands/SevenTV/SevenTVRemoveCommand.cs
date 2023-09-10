@@ -8,11 +8,15 @@ using Microsoft.Extensions.Configuration;
 using Serilog;
 using StackExchange.Redis;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands.SevenTV;
 
-internal class SevenTVRemoveCommand : ChatCommand
+internal partial class SevenTVRemoveCommand : ChatCommand
 {
+    [GeneratedRegex("(7tv)?remove")]
+    public override partial Regex NameRegex();
+
     public ILogger Logger { get; }
     private ISevenTVService SevenTVService { get; }
 
@@ -22,7 +26,6 @@ internal class SevenTVRemoveCommand : ChatCommand
 
     public SevenTVRemoveCommand()
     {
-        SetName("(7tv)?remove");
         SetDescription("Remove 7TV emotes");
     }
 

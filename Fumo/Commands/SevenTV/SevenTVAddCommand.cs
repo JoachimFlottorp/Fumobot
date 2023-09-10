@@ -6,15 +6,16 @@ using Fumo.ThirdParty;
 using Fumo.ThirdParty.Emotes.SevenTV;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
-using System.Runtime.InteropServices;
-using static System.Runtime.InteropServices.JavaScript.JSType;
-using System.Xml.Linq;
 using Fumo.ThirdParty.Exceptions;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands.SevenTV;
 
-internal class SevenTVAddCommand : ChatCommand
+internal partial class SevenTVAddCommand : ChatCommand
 {
+    [GeneratedRegex("(7tv)?add")]
+    public override partial Regex NameRegex();
+
     private ISevenTVService SevenTVService { get; }
 
     private IDatabase Redis { get; }
@@ -23,7 +24,6 @@ internal class SevenTVAddCommand : ChatCommand
 
     public SevenTVAddCommand()
     {
-        SetName("(7tv)?add");
         SetDescription("Adds a 7TV emote to the channel.");
 
         AddParameter(new(typeof(string), "alias"));

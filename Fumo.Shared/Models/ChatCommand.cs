@@ -9,7 +9,7 @@ using System.Text.RegularExpressions;
 
 namespace Fumo.Models;
 
-public abstract class ChatCommand : ChatCommandArguments, IChatCommand
+public abstract partial class ChatCommand : ChatCommandArguments, IChatCommand
 {
     public ChannelDTO Channel { get; set; }
     public UserDTO User { get; set; }
@@ -19,12 +19,13 @@ public abstract class ChatCommand : ChatCommandArguments, IChatCommand
     /// <summary>
     /// The command invocation is the part of the message that matches the command name
     /// </summary>
-    public string CommandInvocationName { get; set; }
+    public string CommandInvocationName
+    { get; set; }
 
     /// <summary>
     /// Regex that matches the command
     /// </summary>
-    public Regex NameMatcher { get; protected set; }
+    public Regex NameMatcher { get => this.NameRegex(); }
 
 
     private ChatCommandFlags _flags = ChatCommandFlags.None;
@@ -75,14 +76,13 @@ public abstract class ChatCommand : ChatCommandArguments, IChatCommand
         protected set => _cooldown = value;
     }
 
+    public virtual Regex NameRegex() => throw new NotImplementedException();
+
     public virtual ValueTask<CommandResult> Execute(CancellationToken ct)
         => throw new NotImplementedException();
 
     public virtual ValueTask<List<string>> GenerateWebsiteDescription(string prefix, CancellationToken ct)
         => default!;
-
-    protected void SetName([StringSyntax(StringSyntaxAttribute.Regex)] string regex)
-        => this.NameMatcher = new($"^{regex}", RegexOptions.Compiled);
 
     protected void SetCooldown(TimeSpan cd)
         => this.Cooldown = cd;

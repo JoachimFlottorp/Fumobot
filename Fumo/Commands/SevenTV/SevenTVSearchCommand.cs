@@ -5,19 +5,22 @@ using Fumo.Shared.Regexes;
 using Fumo.ThirdParty.Emotes.SevenTV;
 using Fumo.ThirdParty.Exceptions;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands.SevenTV;
 
-internal class SevenTVSearchCommand : ChatCommand
+internal partial class SevenTVSearchCommand : ChatCommand
 {
     private readonly int MaxEmoteOutput = 5;
+
+    [GeneratedRegex("7tv$|search")]
+    public override partial Regex NameRegex();
 
     public ISevenTVService SevenTV { get; }
     public IUserRepository UserRepository { get; }
 
     public SevenTVSearchCommand()
     {
-        SetName("7tv$|search");
         SetDescription("Search 7TV emotes");
 
         AddParameter(new(typeof(string), "uploader"));

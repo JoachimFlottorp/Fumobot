@@ -1,19 +1,19 @@
-﻿using Autofac;
-using Fumo.Database;
-using Fumo.Enums;
+﻿using Fumo.Enums;
 using Fumo.Models;
 using Fumo.Repository;
 using MiniTwitch.Irc;
 using Serilog;
-using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands;
 
-internal class LeaveCommand : ChatCommand
+internal partial class LeaveCommand : ChatCommand
 {
+    [GeneratedRegex("leave|part")]
+    public override partial Regex NameRegex();
+
     public LeaveCommand()
     {
-        SetName("leave|part");
         SetFlags(ChatCommandFlags.BroadcasterOnly);
     }
 

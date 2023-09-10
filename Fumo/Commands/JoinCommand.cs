@@ -14,12 +14,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using MiniTwitch.Irc;
 using Serilog;
-using System.Runtime.InteropServices;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands;
 
-internal class JoinCommand : ChatCommand
+internal partial class JoinCommand : ChatCommand
 {
+    [GeneratedRegex("(re)?join")]
+    public override partial Regex NameRegex();
+
     public ILogger Logger { get; }
 
     public DatabaseContext Database { get; }
@@ -36,7 +39,6 @@ internal class JoinCommand : ChatCommand
 
     public JoinCommand()
     {
-        SetName("(re)?join");
         SetDescription("Allow the bot to join you or a channel you mod");
         SetCooldown(TimeSpan.FromMinutes(1));
     }

@@ -2,17 +2,20 @@
 using Fumo.Models;
 using Fumo.Utils;
 using Serilog;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands;
 
-internal class PingCommand : ChatCommand
+internal partial class PingCommand : ChatCommand
 {
+    [GeneratedRegex("[Pp]ing")]
+    public override partial Regex NameRegex();
+
     public ILogger Logger { get; }
     public IApplication Application { get; }
 
     public PingCommand()
     {
-        SetName("[Pp]ing");
         SetFlags(ChatCommandFlags.Reply);
     }
 

@@ -2,16 +2,19 @@
 using Fumo.Exceptions;
 using Fumo.Models;
 using Fumo.Repository;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands;
 
-internal class HelpCommand : ChatCommand
+internal partial class HelpCommand : ChatCommand
 {
+    [GeneratedRegex("help")]
+    public override partial Regex NameRegex();
+
     public CommandRepository CommandRepository { get; }
 
     public HelpCommand()
     {
-        SetName("help");
         SetFlags(ChatCommandFlags.Reply);
         SetCooldown(TimeSpan.FromSeconds(10));
     }
@@ -36,10 +39,7 @@ internal class HelpCommand : ChatCommand
 
         if (command is null)
         {
-            return ValueTask.FromResult(new CommandResult
-            {
-                Message = $"The command {commandName} does not exist"
-            });
+            return new ValueTask<CommandResult>($"The command {commandName} does not exist");
         }
 
         var name = command.NameMatcher;
@@ -47,9 +47,6 @@ internal class HelpCommand : ChatCommand
         var cooldown = command.Cooldown.TotalSeconds;
         var permissions = string.Join(", ", command.Permissions);
 
-        return ValueTask.FromResult(new CommandResult
-        {
-            Message = $"{name} Description - {description} Cooldown - {cooldown}s - Requires - {permissions}"
-        });
+        return new ValueTask<CommandResult>($"{name} Description - {description} Cooldown - {cooldown}s - Requires - {permissions}");
     }
 }

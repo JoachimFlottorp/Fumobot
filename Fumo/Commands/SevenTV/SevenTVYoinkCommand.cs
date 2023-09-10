@@ -10,12 +10,16 @@ using Fumo.ThirdParty.Emotes.SevenTV;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
 using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands.SevenTV;
 
-internal class SevenTVYoinkCommand : ChatCommand
+internal partial class SevenTVYoinkCommand : ChatCommand
 {
     private static readonly char[] ChannelPrefixes = new[] { '@', '#' };
+
+    [GeneratedRegex("(7tv)?yoink|steal")]
+    public override partial Regex NameRegex();
 
     public ISevenTVService SevenTVService { get; }
     public IDatabase Redis { get; }
@@ -26,7 +30,6 @@ internal class SevenTVYoinkCommand : ChatCommand
 
     public SevenTVYoinkCommand()
     {
-        SetName("(7tv)?yoink|steal");
         SetDescription("Yoink emotes from another channel");
 
         AddParameter(new(typeof(bool), "alias"));

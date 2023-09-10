@@ -7,15 +7,18 @@ using Fumo.ThirdParty.Emotes.SevenTV;
 using Fumo.ThirdParty.Exceptions;
 using Fumo.Utils;
 using StackExchange.Redis;
-using System.Linq;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
 namespace Fumo.Commands.SevenTV;
 
-internal class SevenTVUserCommand : ChatCommand
+internal partial class SevenTVUserCommand : ChatCommand
 {
-    private readonly static Regex MaxSlotsRegex = new("\\B(?=(\\d{3})+(?!\\d))", RegexOptions.Compiled | RegexOptions.Multiline);
+    [GeneratedRegex("\\B(?=(\\d{3})+(?!\\d))", RegexOptions.Multiline | RegexOptions.Compiled)]
+    private static partial Regex MaxSlotsRegex();
+
+    [GeneratedRegex("7tvu(ser)?")]
+    public override partial Regex NameRegex();
 
     public IUserRepository UserRepository { get; }
     public ISevenTVService SevenTV { get; }
@@ -24,7 +27,6 @@ internal class SevenTVUserCommand : ChatCommand
 
     public SevenTVUserCommand()
     {
-        SetName("7tvu(ser)?");
         SetDescription("Display information about you or another 7TV user");
         SetFlags(ChatCommandFlags.Reply);
         SetCooldown(TimeSpan.FromSeconds(10));
@@ -90,7 +92,7 @@ internal class SevenTVUserCommand : ChatCommand
             $"https://7tv.app/users/{seventvUser.Id}",
             roles is not null ? roles : "(No roles)",
             $"Join {joinTime} ago",
-            $"Slots {slots} / {MaxSlotsRegex.Replace(maxSlots.ToString(), "_")}"
+            $"Slots {slots} / {MaxSlotsRegex().Replace(maxSlots.ToString(), "_")}"
         }.Where(x => !string.IsNullOrEmpty(x));
 
         return string.Join(" | ", result);

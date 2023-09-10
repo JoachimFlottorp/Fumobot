@@ -1,5 +1,4 @@
-﻿using Fumo.Database.DTO;
-using Fumo.Enums;
+﻿using Fumo.Enums;
 using Fumo.Exceptions;
 using Fumo.Extensions;
 using Fumo.Interfaces;
@@ -9,11 +8,15 @@ using Fumo.ThirdParty.Exceptions;
 using Microsoft.Extensions.Configuration;
 using Serilog;
 using StackExchange.Redis;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands.SevenTV;
 
-internal class SevenTVEditorCommand : ChatCommand
+internal partial class SevenTVEditorCommand : ChatCommand
 {
+    [GeneratedRegex("(7tv)?(?(1)e|editor)")]
+    public override partial Regex NameRegex();
+
     private ILogger Logger { get; }
     public IDatabase Redis { get; }
     public ISevenTVService SevenTVService { get; }
@@ -22,8 +25,6 @@ internal class SevenTVEditorCommand : ChatCommand
 
     public SevenTVEditorCommand()
     {
-        // Surely this works
-        SetName("(7tv)?(?(1)e|editor)");
         SetDescription("Add and Remove 7TV editors from the channel");
 
         SetFlags(ChatCommandFlags.BroadcasterOnly | ChatCommandFlags.Reply);

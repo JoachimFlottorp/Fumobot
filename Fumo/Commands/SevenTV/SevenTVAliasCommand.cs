@@ -3,14 +3,17 @@ using Fumo.Exceptions;
 using Fumo.Extensions;
 using Fumo.Models;
 using Fumo.ThirdParty.Emotes.SevenTV;
-using Fumo.ThirdParty.Exceptions;
 using Microsoft.Extensions.Configuration;
 using StackExchange.Redis;
+using System.Text.RegularExpressions;
 
 namespace Fumo.Commands.SevenTV;
 
-internal class SevenTVAliasCommand : ChatCommand
+internal partial class SevenTVAliasCommand : ChatCommand
 {
+    [GeneratedRegex("(7tv)?alias")]
+    public override partial Regex NameRegex();
+
     public ISevenTVService SevenTVService { get; }
 
     public IDatabase Redis { get; }
@@ -19,7 +22,6 @@ internal class SevenTVAliasCommand : ChatCommand
 
     public SevenTVAliasCommand()
     {
-        SetName("(7tv)?alias");
         SetDescription("Set or Reset the alias of an emote");
         SetFlags(ChatCommandFlags.Reply);
     }
