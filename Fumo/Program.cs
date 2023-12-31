@@ -43,7 +43,7 @@ internal class Program
         using (var scope = container.BeginLifetimeScope())
         {
             var commandRepo = scope.Resolve<CommandRepository>();
-            commandRepo.LoadAssemblyCommands();
+            commandRepo.Load();
 
             // The simplest way of handling the bot's channel/user is just initializing it here.
             var config = scope.Resolve<IConfiguration>();

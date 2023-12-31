@@ -4,6 +4,7 @@ using Fumo.Shared.Models;
 using Serilog;
 using System.Collections.ObjectModel;
 using System.Reflection;
+using System.Reflection.Emit;
 using System.Text.RegularExpressions;
 
 namespace Fumo.Shared.Repositories;
@@ -21,11 +22,19 @@ public class CommandRepository
     public ILogger Logger { get; }
     public ILifetimeScope LifetimeScope { get; }
 
-    public void LoadAssemblyCommands()
+    public void Load()
     {
         Logger.Information("Loading commands");
 
-        List<Type> commands = Assembly.Load("Fumo.Commands")
+        var assembly = Assembly.Load("Fumo.Commands");
+
+        LoadAssemblyCommands(assembly);
+        LoadAssemblyMiddleware(assembly);
+    }
+
+    private void LoadAssemblyCommands(Assembly assembly)
+    {
+        var commands = assembly
             .GetTypes()
             .Where(x => x.IsClass && !x.IsAbstract && x.GetInterfaces().Contains(typeof(IChatCommand)) && x.IsSubclassOf(typeof(ChatCommand)))
             .ToList();
@@ -40,6 +49,27 @@ public class CommandRepository
         }
 
         Logger.Debug("Commands loaded {Commands}", Commands.Select(x => x.Key).ToArray());
+    }
+
+    private void LoadAssemblyMiddleware(Assembly assembly)
+    {
+        Logger.Information("Loading Command Middleware");
+
+        var middleware = assembly
+            .GetTypes()
+            .Where(x => x.IsClass && !x.IsAbstract && x.GetInterfaces().Contains(typeof(ICommandMiddleware)))
+            .ToList();
+
+        foreach (var middlewareType in middleware)
+        {
+            var instance = Activator.CreateInstance(middlewareType) as ICommandMiddleware;
+            if (instance is not null)
+            {
+                Logger.Debug("Loaded command middleware {Middleware}", middlewareType.Name);
+            }
+        }
+
+        Logger.Debug("Loaded {Count} command middleware", middleware.Count);
     }
 
     public ChatCommand? GetCommand(string identifier)

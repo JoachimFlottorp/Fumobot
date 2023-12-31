@@ -78,7 +78,7 @@ public class Program
 
         if (CommandRepository.Commands is { Count: 0 })
         {
-            CommandRepository.LoadAssemblyCommands();
+            CommandRepository.Load();
         }
     }
 }

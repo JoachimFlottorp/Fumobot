@@ -8,6 +8,7 @@ using StackExchange.Redis;
 using Fumo.ThirdParty.Exceptions;
 using Fumo.ThirdParty.Emotes.SevenTV.Enums;
 using Fumo.ThirdParty.Emotes.SevenTV.Models;
+using Fumo.Commands.Middleware;
 
 namespace Fumo.Commands.SevenTV;
 
@@ -24,6 +25,8 @@ public class SevenTVAddCommand : ChatCommand
 
         AddParameter(new(typeof(string), "alias"));
         AddParameter(new(typeof(bool), "exact"));
+
+        AddMiddleware<SevenTVModifyMiddleware>();
     }
 
     public SevenTVAddCommand(ISevenTVService sevenTVService, IConfiguration configuration, IDatabase redis) : this()

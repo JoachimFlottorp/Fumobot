@@ -1,4 +1,5 @@
-﻿using Fumo.Database.DTO;
+﻿using Autofac;
+using Fumo.Database.DTO;
 using Fumo.Shared.Enums;
 using Fumo.Shared.Interfaces.Command;
 using MiniTwitch.Irc.Models;
@@ -23,16 +24,16 @@ public abstract class ChatCommand : ChatCommandArguments, IChatCommand
     /// <summary>
     /// Regex that matches the command
     /// </summary>
-    public Regex NameMatcher { get; protected set; }
+    public Regex NameMatcher { get; private set; }
 
     /// <summary>
     /// Flags that change behaviour
     /// </summary>
-    public ChatCommandFlags Flags { get; protected set; } = ChatCommandFlags.None;
+    public ChatCommandFlags Flags { get; private set; } = ChatCommandFlags.None;
 
-    public List<string> Permissions { get; protected set; } = ["default"];
+    public List<string> Permissions { get; private set; } = ["default"];
 
-    public string Description { get; protected set; } = "No description provided";
+    public string Description { get; private set; } = "No description provided";
 
     /// <summary>
     /// If Moderators and Broadcasters are the only ones that can execute this command in a chat
@@ -44,7 +45,9 @@ public abstract class ChatCommand : ChatCommandArguments, IChatCommand
     /// </summary>
     public bool BroadcasterOnly => Flags.HasFlag(ChatCommandFlags.BroadcasterOnly);
 
-    public TimeSpan Cooldown { get; protected set; } = TimeSpan.FromSeconds(5);
+    public TimeSpan Cooldown { get; private set; } = TimeSpan.FromSeconds(5);
+
+    public List<Type> Middlewares { get; private set; } = [];
 
     #endregion
 
@@ -67,6 +70,9 @@ public abstract class ChatCommand : ChatCommandArguments, IChatCommand
 
     protected void SetDescription(string description)
         => this.Description = description;
+
+    protected void AddMiddleware<T>() where T : ICommandMiddleware
+        => this.Middlewares.Add(typeof(T));
 
     #endregion
 }

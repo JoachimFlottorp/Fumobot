@@ -5,6 +5,7 @@ using Fumo.Database.Extensions;
 using Fumo.Shared.Enums;
 using Fumo.Shared.Exceptions;
 using Fumo.Shared.Interfaces;
+using Fumo.Shared.Interfaces.Command;
 using Fumo.Shared.Models;
 using Fumo.Shared.Repositories;
 using Fumo.ThirdParty.Exceptions;
@@ -114,6 +115,31 @@ internal class CommandHandler : ICommandHandler
         }
     }
 
+    private async ValueTask<string?> DoMiddleware(ILifetimeScope scope, ChatCommand command, CancellationToken ct)
+    {
+        if (command.Middlewares.Count == 0) return null;
+
+        try
+        {
+            foreach (var middlewareT in command.Middlewares)
+            {
+                var middlewareObject = (ICommandMiddleware)scope.Resolve(middlewareT);
+
+                var result = await middlewareObject.Check(command, ct);
+
+                if (result is not null) return result;
+            }
+        }
+        catch (Exception ex)
+        {
+            this.Logger.Error(ex, "Failed to execute middleware for {CommandName}", command.NameMatcher);
+
+            return "Failed to execute command";
+        }
+
+        return null;
+    }
+
     public async ValueTask<CommandResult?> TryExecute(ChatMessage message, string commandName, CancellationToken cancellationToken = default)
     {
         using var commandScope = this.CommandRepository.CreateCommandScope(commandName);
@@ -133,44 +159,70 @@ internal class CommandHandler : ICommandHandler
 
         try
         {
-            if (!message.User.HasPermission("admin.execute"))
+            // Permission checks
             {
-                if (!command.Permissions.All(message.User.Permissions.Contains) ||
-                    (!message.IsMod && command.ModeratorOnly) ||
-                    (!message.IsBroadcaster && command.BroadcasterOnly))
+                if (!message.User.HasPermission("admin.execute"))
                 {
-                    return null;
+                    if (!command.Permissions.All(message.User.Permissions.Contains) ||
+                        (!message.IsMod && command.ModeratorOnly) ||
+                        (!message.IsBroadcaster && command.BroadcasterOnly))
+                    {
+                        return null;
+                    }
+                }
+
+                bool onCooldown = await this.CooldownHandler.IsOnCooldown(message, command);
+                if (onCooldown) return null;
+            }
+
+            // Initialization
+            {
+                command.ParseArguments(message.Input);
+                command.Channel = message.Channel;
+                command.User = message.User;
+                command.Input = message.Input;
+                command.CommandInvocationName = commandName;
+
+                this.Logger.Debug("Executing command {CommandName}", command.NameMatcher);
+            }
+
+            // Middleware
+            {
+                try
+                {
+                    if (await DoMiddleware(commandScope, command, cancellationToken) is string reason)
+                    {
+                        return reason;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    this.Logger.Error(ex, "Failed to execute middleware for {CommandName}", command.NameMatcher);
+
+                    return "Failed to execute command";
                 }
             }
 
-            bool onCooldown = await this.CooldownHandler.IsOnCooldown(message, command);
-            if (onCooldown) return null;
-
-            command.ParseArguments(message.Input);
-            command.Channel = message.Channel;
-            command.User = message.User;
-            command.Input = message.Input;
-            command.CommandInvocationName = commandName;
-
-            this.Logger.Debug("Executing command {CommandName}", command.NameMatcher);
-
-            var result = await command.Execute(cancellationToken);
-
-            commandExecutionLogs.Success = true;
-            commandExecutionLogs.Result = result.Message.Length > 0
-                ? result.Message
-                : "(No Response)";
-
-            result.IgnoreBanphrase = command.Flags.HasFlag(ChatCommandFlags.IgnoreBanphrase);
-
-            await this.CooldownHandler.SetCooldown(message, command);
-
-            if (command.Flags.HasFlag(ChatCommandFlags.Reply))
+            // Execution and finalization
             {
-                result.ReplyID = message.ReplyID;
-            }
+                var result = await command.Execute(cancellationToken);
 
-            return result;
+                commandExecutionLogs.Success = true;
+                commandExecutionLogs.Result = result.Message.Length > 0
+                    ? result.Message
+                    : "(No Response)";
+
+                result.IgnoreBanphrase = command.Flags.HasFlag(ChatCommandFlags.IgnoreBanphrase);
+
+                await this.CooldownHandler.SetCooldown(message, command);
+
+                if (command.Flags.HasFlag(ChatCommandFlags.Reply))
+                {
+                    result.ReplyID = message.ReplyID;
+                }
+
+                return result;
+            }
         }
         catch (Exception ex) when (ex is InvalidInputException || // xdd
                                    ex is UserNotFoundException ||
